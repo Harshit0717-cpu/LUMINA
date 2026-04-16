@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUMINA | Premium Rentals</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <style>
+        :root {
+            --bg-color: #050505;
+            --surface-color: rgba(25, 25, 25, 0.7);
+            --primary: #e50914; 
+            --primary-hover: #b80710;
+            --text-main: #ffffff;
+            --text-muted: #a3a3a3;
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body { margin: 0; font-family: 'Outfit', sans-serif; background: radial-gradient(circle at top right, #1a1a2e, var(--bg-color)); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
+        header { padding: 24px 50px; display: flex; justify-content: space-between; align-items: center; background: rgba(5, 5, 5, 0.8); backdrop-filter: blur(10px); border-bottom: 1px solid var(--glass-border); position: sticky; top: 0; z-index: 100; }
+        .logo { font-size: 28px; font-weight: 800; letter-spacing: 2px; background: linear-gradient(to right, #fff, #a3a3a3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .user-greeting { display: none; font-weight: 300; color: var(--text-muted); }
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        
+        #loginSection { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; text-align: center; animation: fadeIn 1s ease-in; }
+        #loginSection h1 { font-size: 48px; margin-bottom: 10px; }
+        #loginSection p { color: var(--text-muted); margin-bottom: 30px; }
+        .input-group { display: flex; gap: 10px; background: var(--surface-color); padding: 10px; border-radius: 50px; border: 1px solid var(--glass-border); }
+        input { padding: 15px 25px; border-radius: 50px; border: none; background: transparent; color: white; font-size: 16px; font-family: 'Outfit', sans-serif; outline: none; width: 250px; }
+        button { padding: 15px 30px; border: none; border-radius: 50px; background: var(--primary); color: white; font-weight: 600; font-size: 16px; cursor: pointer; transition: all 0.3s ease; }
+        button:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(229, 9, 20, 0.3); }
+        
+        #dashboard { display: none; }
+        h2 { font-size: 24px; font-weight: 600; margin-bottom: 20px; border-left: 4px solid var(--primary); padding-left: 10px; }
+        
+        .movie-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 30px; margin-bottom: 60px; }
+        .movie-card { position: relative; background: var(--surface-color); border-radius: 16px; overflow: hidden; cursor: pointer; transition: all 0.4s ease; border: 1px solid var(--glass-border); }
+        .movie-card:hover { transform: translateY(-10px) scale(1.02); box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        .movie-card img { width: 100%; height: 320px; object-fit: cover; transition: opacity 0.3s ease; }
+        .movie-card:hover img { opacity: 0.7; }
+        .movie-info { position: absolute; bottom: 0; width: 100%; padding: 20px; background: linear-gradient(transparent, rgba(0,0,0,0.9)); box-sizing: border-box; }
+        .movie-title { font-weight: 600; font-size: 18px; margin-bottom: 5px; }
+        .movie-genre { font-size: 12px; color: var(--text-muted); }
+        
+        .table-container { background: var(--surface-color); border-radius: 16px; border: 1px solid var(--glass-border); overflow: hidden; backdrop-filter: blur(10px); }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 18px 24px; border-bottom: 1px solid var(--glass-border); }
+        th { color: var(--text-muted); font-weight: 400; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(255,255,255,0.02); }
+        
+        .badge-paid { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
+        .badge-rejected { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: rgba(231, 76, 60, 0.2); color: #e74c3c; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <div class="logo">LUMINA</div>
+    <div class="user-greeting" id="userGreeting"></div>
+</header>
+
+<div class="container">
+    <div id="loginSection">
+        <h1>Welcome to Lumina.</h1>
+        <p>Your premium gateway to cinematic experiences.</p>
+        <div class="input-group">
+            <input id="username" placeholder="Enter your username" onkeypress="handleEnter(event)">
+            <button onclick="login()">Enter</button>
+        </div>
+    </div>
+
+    <div id="dashboard">
+        <h2>Now Streaming</h2>
+        <div id="movieGrid" class="movie-grid"></div>
+
+        <h2>Your Rental History</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Movie</th>
+                        <th>Date</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Transaction ID (UTR)</th>
+                    </tr>
+                </thead>
+                <tbody id="historyBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentUser = null;
+    const TICKET_PRICE = 99; // Amount in INR
+
+    function handleEnter(e) { if (e.key === 'Enter') login(); }
+
+    function login() {
+        const input = document.getElementById('username').value.trim();
+        if (!input) return alert("Please enter a username.");
+
+        currentUser = input;
+        
+        document.getElementById('loginSection').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        document.getElementById('dashboard').style.animation = 'fadeIn 0.8s ease-out';
+        
+        const greeting = document.getElementById('userGreeting');
+        greeting.style.display = 'block';
+        greeting.innerText = `Welcome, ${currentUser}`;
+
+        loadMovies();
+        loadTransactions();
+    }
+
+    async function loadMovies() {
+        try {
+            const res = await fetch('/api/movies');
+            const movies = await res.json();
+            const grid = document.getElementById('movieGrid');
+            grid.innerHTML = '';
+
+            movies.forEach((m, index) => {
+                const card = document.createElement('div');
+                card.className = 'movie-card';
+                card.style.animation = `fadeIn ${0.5 + (index * 0.1)}s ease-out`;
+
+                card.innerHTML = `
+                    <img src="${m.img}" alt="${m.title}">
+                    <div class="movie-info">
+                        <div class="movie-title">${m.title}</div>
+                        <div class="movie-genre">${m.genre} • ${m.rating}</div>
+                    </div>
+                `;
+                
+                // Click triggers Razorpay checkout directly
+                card.onclick = () => initPayment(m.title);
+                grid.appendChild(card);
+            });
+        } catch (error) {
+            console.error("Failed to load movies:", error);
+        }
+    }
+
+    // --- REAL RAZORPAY PAYMENT LOGIC ---
+    async function initPayment(movieTitle) {
+        try {
+            // 1. Tell backend to create an order
+            const orderRes = await fetch('/api/create-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount: TICKET_PRICE })
+            });
+            const order = await orderRes.json();
+
+            // 2. Configure Razorpay Popup
+            const options = {
+                // IMPORTANT: Replace with your actual Test Key ID from Razorpay Dashboard
+                "key": "rzp_test_Se37C16JliZa5L", 
+                "amount": order.amount,
+                "currency": "INR",
+                "name": "LUMINA RENTALS",
+                "description": `Renting: ${movieTitle}`,
+                "order_id": order.id, 
+                
+                // 3. Handle Successful Payment
+                "handler": async function (response) {
+                    try {
+                        const verifyRes = await fetch('/api/verify-payment', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_signature: response.razorpay_signature,
+                                username: currentUser,
+                                movie: movieTitle,
+                                amount: TICKET_PRICE
+                            })
+                        });
+                        
+                        if (verifyRes.ok) {
+                            alert("Payment Verified and Movie Rented Successfully!");
+                            loadTransactions(); // Instantly update the UI
+                        } else {
+                            alert("Payment verification failed at server level.");
+                        }
+                    } catch (err) {
+                        console.error("Verification error", err);
+                    }
+                },
+                
+                // Prefill contact info to force UPI & Cards to show up properly
+                "prefill": {
+                    "name": currentUser,
+                    "contact": "9999999999", 
+                    "email": "test@lumina.com"
+                },
+                
+                // Handle user clicking the "X" to close the popup manually
+                "modal": {
+                    "ondismiss": async function() {
+                        await fetch('/api/cancel-payment', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                username: currentUser,
+                                movie: movieTitle,
+                                amount: TICKET_PRICE
+                            })
+                        });
+                        loadTransactions(); // Update the UI to show 'Rejected'
+                    }
+                },
+                "theme": {
+                    "color": "#e50914" 
+                }
+            };
+
+            // 4. Open Razorpay Checkout Window
+            const rzp = new Razorpay(options);
+            
+            // Handle formal payment failure (e.g., bank declined the card)
+            rzp.on('payment.failed', async function (response) {
+                alert(`Payment Failed: ${response.error.description}`);
+                
+                await fetch('/api/cancel-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: currentUser,
+                        movie: movieTitle,
+                        amount: TICKET_PRICE
+                    })
+                });
+                loadTransactions(); // Update the UI to show 'Rejected'
+            });
+
+            rzp.open();
+            
+        } catch (error) {
+            console.error("Error initiating payment:", error);
+            alert("Could not connect to payment gateway.");
+        }
+    }
+
+    async function loadTransactions() {
+        try {
+            const res = await fetch(`/api/transactions?username=${encodeURIComponent(currentUser)}`);
+            const data = await res.json();
+            const tbody = document.getElementById('historyBody');
+            tbody.innerHTML = '';
+
+            data.forEach(t => {
+                const dateObj = new Date(t.date);
+                const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                
+                const badgeClass = t.status === 'Paid' ? 'badge-paid' : 'badge-rejected';
+                // Razorpay Payment ID acts as our UTR when successful
+                const displayUtr = t.utr_number || 'N/A';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-weight: 600;">${t.movie}</td>
+                        <td>${formattedDate}</td>
+                        <td>₹${t.amount}</td>
+                        <td><span class="${badgeClass}">${t.status}</span></td>
+                        <td style="color: var(--text-muted); font-family: monospace;">${displayUtr}</td>
+                    </tr>
+                `;
+            });
+        } catch (error) {
+            console.error("Failed to load history:", error);
+        }
+    }
+</script>
+
+</body>
+</html>
